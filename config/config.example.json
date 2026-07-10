@@ -1,0 +1,17 @@
+{
+  "output_dir": "~/Downloads/VideoDownloader",
+  "schedule_interval_hours": 3,
+  "first_publish_offset_minutes": 10,
+  "title_instruction": "Giữ tone tự nhiên, dễ click.",
+  "generate_title": true,
+  "default_tags": "",
+  "category": "Người & Blog",
+  "privacy": "private",
+  "made_for_kids": false,
+  "ollama_model": "llama3:latest",
+  "quicktime_compat": true,
+  "local_source_dir": "",
+  "youtube_account_id": "",
+  "max_uploads_per_run": 0,
+  "auto_switch_account_on_limit": true
+}

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.DS_Store
+.env
+.venv/
+venv/
+
+# Dữ liệu nhạy cảm & runtime
+credentials/*
+!credentials/.gitkeep
+!credentials/README.md
+data/*
+!data/.gitkeep
+
+# File cũ (nếu còn sót)
+upload-tool/
+config.json
+pending_uploads.json
