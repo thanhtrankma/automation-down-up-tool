@@ -286,6 +286,16 @@ class PipelineApp(tk.Toplevel):
         ttk.Checkbutton(cfg, text="Ưu tiên tương thích QuickTime (H.264+AAC)", variable=self.quicktime_var).grid(
             row=row, column=0, columnspan=2, sticky="w", padx=8, pady=4
         )
+        self.delete_source_var = tk.BooleanVar(
+            value=bool(self.config_data.get("delete_source_after_upload", False))
+        )
+        ttk.Checkbutton(
+            cfg,
+            text="Xóa video gốc sau khi up",
+            variable=self.delete_source_var,
+        ).grid(row=row, column=2, columnspan=2, sticky="w", padx=8, pady=4)
+
+        row += 1
         ttk.Button(cfg, text="💾 Lưu cấu hình", command=self._save_config).grid(
             row=row, column=3, sticky="e", padx=8, pady=4
         )
@@ -527,6 +537,7 @@ class PipelineApp(tk.Toplevel):
             "youtube_account_id": self._account_label_to_id.get(self.account_var.get().strip(), ""),
             "max_uploads_per_run": max(0, max_uploads),
             "auto_switch_account_on_limit": self.auto_switch_account_var.get(),
+            "delete_source_after_upload": self.delete_source_var.get(),
         }
         save_config(self.config_data)
         self._log("💾 Đã lưu cấu hình.")
@@ -659,9 +670,11 @@ class PipelineApp(tk.Toplevel):
         schedule_local: str,
         original_title: str,
         item_id: str | None,
+        original_path: str = "",
     ) -> str | None:
         payload = {
             "video_path": upload_path,
+            "original_path": original_path or upload_path,
             "title": new_title,
             "description": description,
             "tags": tags,
@@ -796,6 +809,11 @@ class PipelineApp(tk.Toplevel):
             if video_id:
                 remove_pending(item["id"])
                 self.after(0, self._update_pending_button)
+                if self.config_data.get("delete_source_after_upload", False):
+                    self._delete_source_files(
+                        item.get("original_path") or filepath,
+                        filepath,
+                    )
                 self._msg_queue.put(
                     PipelineMessage(kind="log", text=f"✅ Đã upload hàng chờ: {title} ({video_id})")
                 )
@@ -926,10 +944,14 @@ class PipelineApp(tk.Toplevel):
             schedule_local=schedule_local,
             original_title=original_title,
             item_id=item_id,
+            original_path=filepath,
         )
 
         if not video_id:
             return
+
+        if self.config_data.get("delete_source_after_upload", False):
+            self._delete_source_files(filepath, upload_path)
 
         if item_id:
             self._update_video_row(item_id, status=f"✅ Đã đăng ({video_id})")
@@ -939,6 +961,24 @@ class PipelineApp(tk.Toplevel):
                 text=f"🎉 Hoàn tất video #{display_num}: {new_title} | Lịch: {schedule_local}",
             )
         )
+
+    def _delete_source_files(self, original_path: str, upload_path: str) -> None:
+        """Xóa video gốc (và file convert tạm nếu có) sau khi upload thành công."""
+        for path in dict.fromkeys([original_path, upload_path]):
+            if not path or not os.path.isfile(path):
+                continue
+            try:
+                os.remove(path)
+                self._msg_queue.put(
+                    PipelineMessage(kind="log", text=f"🗑️ Đã xóa: {os.path.basename(path)}")
+                )
+            except OSError as exc:
+                self._msg_queue.put(
+                    PipelineMessage(
+                        kind="log",
+                        text=f"⚠️ Không xóa được {os.path.basename(path)}: {exc}",
+                    )
+                )
 
     def _calc_publish_at_utc_for_index(self, index: int) -> tuple[str, str]:
         interval_hours = float(self.config_data["schedule_interval_hours"])

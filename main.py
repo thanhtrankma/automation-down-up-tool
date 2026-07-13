@@ -7,8 +7,9 @@ Chạy: python3 main.py
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
+from apps.cut_video import CutVideoApp
 from apps.download import VideoDownloaderApp
 from apps.pipeline import PipelineApp
 from apps.upload import YoutubeUploaderApp
@@ -51,7 +52,13 @@ class HubApp(tk.Tk):
                 self._open_pipeline,
                 True,
             ),
-            ("✂️", "Tự động cắt video", "Đang phát triển", self._open_cut_video, False),
+            (
+                "✂️",
+                "Tự động cắt video",
+                "Chuyển ngang → dọc (16:9 → 9:16) cho Shorts/Reels",
+                self._open_cut_video,
+                True,
+            ),
         ]
 
         for icon, title, subtitle, command, enabled in menu_items:
@@ -162,11 +169,7 @@ class HubApp(tk.Tk):
         PipelineApp(self, show_back=True)
 
     def _open_cut_video(self) -> None:
-        messagebox.showinfo(
-            "Đang phát triển",
-            "Tính năng «Tự động cắt video» đang được phát triển.\n"
-            "Vui lòng quay lại sau.",
-        )
+        CutVideoApp(self, show_back=True)
 
 
 def main() -> None:

@@ -23,6 +23,7 @@ DEFAULT_CONFIG = {
     "youtube_account_id": "",
     "max_uploads_per_run": 0,
     "auto_switch_account_on_limit": True,
+    "delete_source_after_upload": False,
 }
 
 

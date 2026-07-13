@@ -44,7 +44,7 @@ Menu chính gồm 4 mục:
 | **Tải videos** | Tải video/playlist/kênh bằng yt-dlp |
 | **Upload Video** | Upload thủ công, nhiều tab, generate mô tả Ollama |
 | **Quy trình tự động** | Tải hoặc chọn thư mục → generate → upload & lịch |
-| **Tự động cắt video** | Đang phát triển |
+| **Tự động cắt video** | Chuyển ngang → dọc (16:9 → 9:16), crop / blur / pad |
 
 ### Chạy từng module (tuỳ chọn)
 
@@ -52,6 +52,7 @@ Menu chính gồm 4 mục:
 python3 -m apps.download    # Chỉ tải video
 python3 -m apps.upload      # Chỉ upload
 python3 -m apps.pipeline    # Chỉ quy trình tự động
+python3 -m apps.cut_video   # Chỉ chuyển tỉ lệ ngang → dọc
 ```
 
 File `app.py` và `video_downloader.py` ở thư mục gốc vẫn chạy được (tương thích ngược).
@@ -67,7 +68,8 @@ download-tool/
 ├── apps/                   # Giao diện từng tính năng
 │   ├── download.py         # Tải videos (yt-dlp)
 │   ├── upload.py           # Upload YouTube
-│   └── pipeline.py         # Quy trình tự động
+│   ├── pipeline.py         # Quy trình tự động
+│   └── cut_video.py        # Chuyển tỉ lệ ngang → dọc
 │
 ├── services/               # Logic dùng chung
 │   ├── paths.py            # Đường dẫn chuẩn & migrate layout cũ
@@ -75,6 +77,7 @@ download-tool/
 │   ├── downloader.py       # Wrapper yt-dlp
 │   ├── ollama_client.py    # Generate tiêu đề/mô tả
 │   ├── video_prep.py       # Chuẩn hóa video (H.264+AAC)
+│   ├── aspect_convert.py   # Chuyển tỉ lệ khung hình (FFmpeg)
 │   └── pending_uploads.py  # Hàng chờ khi hết hạn mức upload
 │
 ├── youtube/
@@ -112,6 +115,18 @@ YouTube giới hạn số video upload / 24h (kênh mới thường ~6–15 vide
 - Bật **«Tự chuyển tài khoản»** nếu có nhiều kênh YouTube
 - Đặt **«Giới hạn upload/lần chạy»** để tránh vượt hạn mức một lúc
 - Xác minh số điện thoại tại YouTube Studio để tăng hạn mức
+
+## Chuyển ngang → dọc (Tự động cắt video)
+
+Menu **Tự động cắt video** dùng FFmpeg để đổi tỉ lệ, ví dụ **16:9 → 9:16** (1080×1920) cho YouTube Shorts / Reels / TikTok.
+
+| Chế độ | Mô tả |
+|--------|--------|
+| **Phóng + nền mờ (blur)** | Giữ toàn bộ nội dung, nền blur (mặc định, đẹp cho Shorts) |
+| **Cắt giữa (crop)** | Cắt vùng giữa / trái / phải theo khung dọc |
+| **Viền đen (pad)** | Giữ toàn bộ, thêm viền đen |
+
+Có thể chọn nhiều file hoặc cả thư mục. File đầu ra: `tên_1080x1920.mp4` (cạnh file gốc hoặc thư mục bạn chọn).
 
 ## Ollama
 

@@ -13,5 +13,6 @@
   "local_source_dir": "",
   "youtube_account_id": "",
   "max_uploads_per_run": 0,
-  "auto_switch_account_on_limit": true
+  "auto_switch_account_on_limit": true,
+  "delete_source_after_upload": false
 }
