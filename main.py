@@ -44,6 +44,13 @@ class HubApp(tk.Tk):
 
         menu_items = [
             ("⬇️", "Tải videos", "Tải video/playlist/kênh bằng yt-dlp", self._open_download, True),
+            (
+                "🍑",
+                "Douyin (đăng nhập)",
+                "Mở Douyin để đăng nhập rồi tải bằng cookie",
+                self._open_douyin_download,
+                True,
+            ),
             ("⬆️", "Upload Video", "Upload video lên YouTube (nhiều tab)", self._open_upload, True),
             (
                 "🔄",
@@ -152,6 +159,9 @@ class HubApp(tk.Tk):
 
     def _open_download(self) -> None:
         VideoDownloaderApp(self, show_back=True)
+
+    def _open_douyin_download(self) -> None:
+        VideoDownloaderApp(self, show_back=True, douyin_login_mode=True)
 
     def _open_upload(self) -> None:
         win = tk.Toplevel(self)

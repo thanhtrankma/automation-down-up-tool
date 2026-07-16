@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import ssl
 from typing import Callable, Optional
+from urllib.parse import urlparse
 
 from services.video_prep import should_process_download
 
@@ -29,6 +30,30 @@ FORMAT_QUICKTIME_COMPATIBLE = (
     "/best[ext=mp4]/best"
 )
 FORMAT_BEST_QUALITY = "bestvideo+bestaudio/best"
+
+# yt-dlp đã hỗ trợ sẵn Douyin và Bilibili (extractor có trong thư viện).
+# Một số video trên 2 nền tảng này yêu cầu header Referer đúng domain,
+# nếu không sẽ bị chặn (403) dù URL hợp lệ.
+_REFERER_BY_HOST = {
+    "douyin.com": "https://www.douyin.com/",
+    "iesdouyin.com": "https://www.douyin.com/",
+    "bilibili.com": "https://www.bilibili.com/",
+    "b23.tv": "https://www.bilibili.com/",
+}
+
+# Cookie trình duyệt chỉ được áp dụng khi người dùng CHỌN RÕ trong giao diện.
+# Không set mặc định để tránh ảnh hưởng tới các tải bình thường (vd. YouTube)
+# hoặc gây lỗi trên máy chưa cấp quyền đọc cookie trình duyệt.
+COOKIE_BROWSER_CHOICES = {"Không dùng": "", "Safari": "safari", "Chrome": "chrome"}
+
+
+def extra_headers_for_url(url: str) -> dict:
+    """Trả về header bổ sung (nếu cần) cho một số nền tảng cụ thể (Douyin/Bilibili)."""
+    host = (urlparse(url).netloc or "").lower()
+    for domain, referer in _REFERER_BY_HOST.items():
+        if domain in host:
+            return {"Referer": referer}
+    return {}
 
 
 class DownloadCancelledFlag:
@@ -56,6 +81,7 @@ def download_videos(
     on_progress: Optional[Callable[[str, float], None]] = None,
     cancel_flag: Optional[DownloadCancelledFlag] = None,
     quicktime_compat: bool = True,
+    cookies_browser: str = "",
 ) -> None:
     """Tải video/playlist. Gọi on_video_finished(filepath, original_title) sau mỗi video."""
     os.makedirs(output_dir, exist_ok=True)
@@ -80,6 +106,12 @@ def download_videos(
     ydl_opts.update({"format": chosen_format, "merge_output_format": "mp4"})
     if quicktime_compat:
         ydl_opts["format_sort"] = ["vcodec:h264", "acodec:aac", "ext:mp4:m4a", "res"]
+
+    headers = extra_headers_for_url(url)
+    if headers:
+        ydl_opts["http_headers"] = headers
+    if cookies_browser:
+        ydl_opts["cookiesfrombrowser"] = (cookies_browser,)
 
     def hook(d: dict) -> None:
         if cancel_flag.is_cancelled():
